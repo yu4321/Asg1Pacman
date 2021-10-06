@@ -9,9 +9,13 @@
 
 using namespace std;
 
+/// <summary>
+/// 게임 엔티티의 타입 목록 : 없음, 플레이어, 적, 과일
+/// </summary>
 enum EntityTypes { none, player, enemy, fruit };
 
 
+/// 전역 변수들은 여기 있으면 객체지향 어긋나지만 일단 작업
 
 void GameOver();
 void GameFinish();
@@ -22,9 +26,21 @@ int Width = 600, Height = 600;
 
 float xMax = 10, yMax = 10;
 
+float enemyRadius = 0.3;
+float playerRadius = 0.5;
+float playerRadiusIncrese = 0.1;
+float fruitRadius = 0.3;
+
+float enemySpeed = 0.01;
+float enemySpeedIncrease = 1.5;
+float playerSpeed = (xMax + yMax) / 30;
+
 int enemySpawnInterval = 5000;
 int fruitSpawnInterval = 6000;
 
+/// <summary>
+/// 모든 게임 엔티티의 원형
+/// </summary>
 class Entity {
 public:
 	float x=0;
@@ -101,6 +117,9 @@ public:
 	}
 };
 
+/// <summary>
+/// 과일 엔티티
+/// </summary>
 class Fruit : public Entity {
 public:
 
@@ -111,19 +130,6 @@ public:
 		allEntities = es;
 		isAlive = true;
 	}
-	/*virtual vector<Entity> Touched() {
-		printf("call overrided touched from pacman\n");
-		vector<Entity> v = Entity::Touched();
-
-		for (auto x : v) {
-			if (x.type != EntityTypes::fruit) {
-				isAlive = false;
-				break;
-			}
-		}
-
-		return v;
-	}*/
 
 	virtual void Draw() {
 		glTranslatef(x, y, 0.0);
@@ -155,6 +161,9 @@ public:
 	}
 };
 
+/// <summary>
+/// 적 엔티티
+/// </summary>
 class Enemy : public Entity {
 public:
 	float lastDirection = 0;
@@ -166,8 +175,8 @@ public:
 		allEntities = es;
 		
 		type = EntityTypes::enemy;
-		radius = 0.3;
-		speed = 0.005;
+		radius = enemyRadius;
+		speed = enemySpeed;
 		isAlive = true;
 	}
 
@@ -178,7 +187,7 @@ public:
 			if (x->type == EntityTypes::fruit) {
 				x->Kill();
 				fruitAte++;
-				speed *= 1.3;
+				speed *= enemySpeedIncrease;
 			}
 			else if (x->type == EntityTypes::player) {
 				break;
@@ -204,8 +213,6 @@ public:
 			lastDirection = ang * 180 / 3.14;
 			//printf("enemy angle : % f\n", lastDirection);
 		}
-
-		//find player and turn to that
 	}
 
 	virtual void Move() {
@@ -255,14 +262,19 @@ public:
 	}
 };
 
+/// <summary>
+/// 플레이어 엔티티
+/// </summary>
 class Pacman :public Entity {
 public:
 	float lastDirection = 0;
 	int fruitAte = 0;
+	int calledCnt = 0;
+	bool isMouthOpened = true;
 
 	Pacman(vector<Entity*>* es) {
 		//printf("created pacman\n");
-		radius = 0.5;
+		radius = playerRadius;
 		allEntities = es;
 		type = EntityTypes::player;
 		isAlive = true;
@@ -276,7 +288,7 @@ public:
 			if (x->type == EntityTypes::fruit) {
 				fruitAte++;
 				x->Kill();
-				radius += 0.1;
+				radius += playerRadiusIncrese;
 			}
 			else if (x->type == EntityTypes::enemy) {
 				isAlive = false;
@@ -311,13 +323,11 @@ public:
 			}
 
 			if (currentDirection == lastDirection) {
-				speed = (xMax+yMax)/30 ;
+				speed = playerSpeed ;
 			}
 
 			lastDirection = currentDirection;
-			/*	if (lastPressed == GLUT_KEY_UP) {
-					lastDirection = 0;
-				}*/
+
 			lastPressed = 0;
 		}
 
@@ -330,19 +340,15 @@ public:
 
 
 		if (lastDirection == 90) {
-			//y += speed;
 			yOffset = speed;
 		}
 		else if (lastDirection == 180) {
-			//x -= speed;
 			xOffset = -speed;
 		}
 		else if (lastDirection == 270) {
-			//y -= speed;
 			yOffset = -speed;
 		}
 		else if (lastDirection == 0) {
-			//x += speed;
 			xOffset = speed;
 		}
 
@@ -361,6 +367,14 @@ public:
 	}
 
 	virtual void Draw() {
+
+		if (calledCnt < 60) {
+			calledCnt++;
+		}
+		else {
+			calledCnt = 0;
+			isMouthOpened = !isMouthOpened;
+		}
 		glTranslatef(x, y, 0.0);
 		glRotatef(lastDirection, 0, 0, 1.0);
 		glLineWidth(3.0);
@@ -374,12 +388,31 @@ public:
 		glBegin(GL_TRIANGLE_FAN);
 		glVertex2f(0, 0); // center of circle
 		for (int i = 0; i <= triangleAmount; i++) {
-			if (i > 30 && i<300) {
+
+			float min = isMouthOpened ? 10 : 30;
+			float max = isMouthOpened ? 350 : 300;
+			if (i > min && i < max) {
 				glVertex2f(
 					(radius * cos(i * twicePi / triangleAmount)),
 					(radius * sin(i * twicePi / triangleAmount))
 				);
 			}
+			/*if (isMouthOpened) {
+				if (i > 30 && i < 300) {
+					glVertex2f(
+						(radius * cos(i * twicePi / triangleAmount)),
+						(radius * sin(i * twicePi / triangleAmount))
+					);
+				}
+			}
+			else {
+				glVertex2f(
+					(radius * cos(i * twicePi / triangleAmount)),
+					(radius * sin(i * twicePi / triangleAmount))
+				);
+			}*/
+
+			
 		
 		}
 		glEnd();
@@ -396,7 +429,7 @@ vector<Entity*> entities;
 
 void GameOver() {
 	int ate = currentPlayer->fruitAte;
-	printf("You Lose...\nCollected Fruit: %d\nSurvived Time: %f\n", ate,timeLeft);
+	printf("You Lose...\nCollected Fruit: %d\nTime Left: %f\n", ate,timeLeft);
 	glutLeaveMainLoop();
 }
 
@@ -457,17 +490,10 @@ void SpawnEnemyAtRandom() {
 
 
 
-// 콜백 함수 선언
 void Render();
 void Reshape(int w, int h);
 void Timer(int id);
 
-void SpawnFruit();
-
-// 사용자 정의 함수
-void PrintGLMatrix(GLenum pname);
-
-// 전역 변수
 float angle1 = 0.0;
 float angle2 = 0.0;
 
@@ -499,27 +525,21 @@ void MakeMaps() {
 }
 
 
-// 메인 함수
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
-	// Freeglut 초기화
+
 	glutInit(&argc, argv);
 
-	// 윈도우 크기 및 생성 위치 설정
 	glutInitWindowSize(Width, Height);
 	glutInitWindowPosition(0, 0);
 
-	// 디스플레이 모드(칼라버퍼) 설정
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 
-	// 윈도우 생성
 	glutCreateWindow("PacMan");
 
-	// 콜백 함수 등록
 	glutDisplayFunc(Render);
 	glutReshapeFunc(Reshape);
-	//glutTimerFunc(100, Timer, 1);
 	glutTimerFunc(10, Timer, 2);
 
 
@@ -531,21 +551,15 @@ int main(int argc, char** argv)
 		}
 	);
 
-
-
 	MakeMaps();
 
 	Pacman player(&entities);
-	//Fruit testFruit;
-	//testFruit.x = xMax / 2;
-	//testFruit.y = yMax / 2;
+
 	player.x = xMax / 2;
 	player.y = yMax / 2;
-	//entities.push_back(&testFruit);
 	entities.push_back(&player);
 	currentPlayer = &player;
 
-	// 메시지 처리 루푸 진입
 	glutMainLoop();
 	return 0;
 }
@@ -566,7 +580,6 @@ void Timer(int id)
 }
 void Reshape(int w, int h)
 {
-	// View-port transformation
 	glViewport(0, 0, w, h);
 	Width = w;
 	Height = h;
@@ -574,25 +587,16 @@ void Reshape(int w, int h)
 
 void Render()
 {
-	// 칼라 버퍼 초기화
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	// 관측 공간 지정
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//gluOrtho2D(-xMax, xMax, -yMax, yMax);
 	gluOrtho2D(0, xMax, 0, yMax);
-	//gluOrtho2D(0,Width,0,Height);
-	//PrintGLMatrix(GL_PROJECTION_MATRIX);
 
-	// 관측 변환 설정
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	//PrintGLMatrix(GL_MODELVIEW_MATRIX);
 
-	// 좌표축 그리기
-	//DrawGrid();
 
 	for (auto x : entities) {
 		if (x->isAlive) {
@@ -601,10 +605,7 @@ void Render()
 			x->Move();
 			glPushMatrix();
 			{
-				//glTranslatef(x->x, x->y, 0.0);
-				//glTranslatef(xOffset, yOffset, 0.0);
 				x->Draw();
-				//DrawObject(1.0, 0.0, 0.0);
 			}
 			glPopMatrix();
 		}
@@ -618,34 +619,7 @@ void Render()
 			iter++;
 		}
 	}
-	//// Transformation example
-	//glPushMatrix();
-	//{
-	//	glTranslatef(xOffset, yOffset, 0.0);
-	//	//glRotatef(angle1, 0.0, 0.0, 1.0);
-	//	DrawObject(1.0, 0.0, 0.0);
-	//}
-	//glPopMatrix();
 
-	//glPushMatrix();
-	//{
-	//	glTranslatef(2.0, 0.0, 0.0);
-	//	//glRotatef(angle2, 0.0, 0.0, 1.0);
-	//	DrawObject(0.0, 0.0, 1.0);
-	//}
-	//glPopMatrix();
-
-	// 렌더링 완료
 	glutSwapBuffers();
 }
 
-void PrintGLMatrix(GLenum pname)
-{
-	float m[16];
-	glGetFloatv(pname, m);
-
-	/*printf("|%7.1f%7.1f%7.1f%7.1f|\n", m[0], m[4], m[8], m[12]);
-	printf("|%7.1f%7.1f%7.1f%7.1f|\n", m[1], m[5], m[9], m[13]);
-	printf("|%7.1f%7.1f%7.1f%7.1f|\n", m[2], m[6], m[10], m[14]);
-	printf("|%7.1f%7.1f%7.1f%7.1f|\n\n", m[3], m[7], m[11], m[15]);*/
-}
