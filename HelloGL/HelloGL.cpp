@@ -456,8 +456,31 @@ void GameFinish() {
 void SpawnFruitAtRandom() {
 	float x = 0;
 	float y = 0;
-	float nx = rand() % (int)xMax;
-	float ny = rand() % (int)yMax;
+	float nx = 0;
+	float ny = 0;
+	while (true) {
+		nx = rand() % (int)xMax;
+		ny = rand() % (int)yMax;
+
+		if (currentPlayer != NULL) {
+			auto nEntity = new Entity;
+			nEntity->allEntities = currentPlayer->allEntities;
+			nEntity->x = nx;
+			nEntity->y = ny;
+
+			auto v = nEntity->Touched();
+
+			if (!v.empty()) {
+				continue;
+			}
+		}
+
+		
+		x = nx;
+		y = ny;
+		break;
+	}
+
 
 	x = nx;
 	y = ny;
@@ -473,10 +496,31 @@ void SpawnFruitAtRandom() {
 /// 무작위 위치에 적 생성
 /// </summary>
 void SpawnEnemyAtRandom() {
+
 	float x = 0;
 	float y = 0;
-	float nx = rand() % (int)xMax;
-	float ny = rand() % (int)yMax;
+	float nx = 0;
+	float ny = 0;
+	while (true) {
+		nx = rand() % (int)xMax;
+		ny = rand() % (int)yMax;
+
+		if (currentPlayer != NULL) {
+			auto nEntity = new Entity;
+			nEntity->allEntities = currentPlayer->allEntities;
+			nEntity->x = nx;
+			nEntity->y = ny;
+
+			auto v = nEntity->Touched();
+
+			if (!v.empty()) {
+				continue;
+			}
+		}
+		x = nx;
+		y = ny;
+		break;
+	}
 
 
 	x = nx;
