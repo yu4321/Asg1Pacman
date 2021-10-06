@@ -135,7 +135,7 @@ public:
 
 
 	virtual vector<Entity> Touched(){
-		printf("call overrided touched from pacman\n");
+		//printf("call overrided touched from pacman\n");
 		vector<Entity> v;
 
 		for (auto x : v) {
@@ -154,22 +154,36 @@ public:
 	}
 
 	virtual void Inputed() {
-		printf("call overrided Inputed from pacman\n");
+		//printf("call overrided Inputed from pacman\n");
 		float currentDirection = 0;
 
 		if (lastPressed != 0) {
 			switch (lastPressed)
 			{
+			//case GLUT_KEY_UP:
+			//	break;
+			//case GLUT_KEY_DOWN:
+			//	currentDirection = 180;
+			//	break;
+			//case GLUT_KEY_LEFT:
+			//	currentDirection = 90;
+			//	break;
+			//case GLUT_KEY_RIGHT:
+			//	currentDirection = 270;
+			//	break;
+			//default:
+			//	break;
 			case GLUT_KEY_UP:
-				break;
-			case GLUT_KEY_DOWN:
-				currentDirection = 180;
-				break;
-			case GLUT_KEY_LEFT:
 				currentDirection = 90;
 				break;
-			case GLUT_KEY_RIGHT:
+			case GLUT_KEY_DOWN:
 				currentDirection = 270;
+				break;
+			case GLUT_KEY_LEFT:
+				currentDirection = 180;
+				break;
+			case GLUT_KEY_RIGHT:
+				currentDirection = 0;
 				break;
 			default:
 				break;
@@ -190,24 +204,41 @@ public:
 	}
 
 	virtual void Move() {
-		printf("call overrided Move from pacman\n");
+		//printf("call overrided Move from pacman\n");
 
 		float xOffset = 0;
 		float yOffset = 0;
 
-		if (lastDirection == 0) {
+		//if (lastDirection == 0) {
+		//	//y += speed;
+		//	yOffset = speed;
+		//}
+		//else if (lastDirection == 90) {
+		//	//x -= speed;
+		//	xOffset = -speed;
+		//}
+		//else if (lastDirection == 180) {
+		//	//y -= speed;
+		//	yOffset = -speed;
+		//}
+		//else if (lastDirection == 270) {
+		//	//x += speed;
+		//	xOffset = speed;
+		//}
+
+		if (lastDirection == 90) {
 			//y += speed;
 			yOffset = speed;
 		}
-		else if (lastDirection == 90) {
+		else if (lastDirection == 180) {
 			//x -= speed;
 			xOffset = -speed;
 		}
-		else if (lastDirection == 180) {
+		else if (lastDirection == 270) {
 			//y -= speed;
 			yOffset = -speed;
 		}
-		else if (lastDirection == 270) {
+		else if (lastDirection == 0) {
 			//x += speed;
 			xOffset = speed;
 		}
@@ -232,66 +263,48 @@ public:
 		glLineWidth(3.0);
 	
 
-		glColor3f(0.0f, 0.0f, 1.0f);
+		glColor3f(1.0f, 0.7f, 0);
 
 		double rad = radius;
-		glBegin(GL_POLYGON);
-
-		for (int i = 0; i < 360; i++) {
-			double angle, x, y;
-			angle = i * 3.141592 / 180;
-			x = rad * cos(angle);
-			y = rad * sin(angle);
-			glVertex2f(x, y);
+		GLfloat twicePi = 2.0f * 3.14;
+		int triangleAmount = 360;
+		glBegin(GL_TRIANGLE_FAN);
+		glVertex2f(0, 0); // center of circle
+		for (int i = 0; i <= triangleAmount; i++) {
+			if (i > 30 && i<300) {
+				glVertex2f(
+					(radius * cos(i * twicePi / triangleAmount)),
+					(radius * sin(i * twicePi / triangleAmount))
+				);
+			}
+		
 		}
 		glEnd();
+		//glBegin(GL_POLYGON);
 
-		glColor3f(1, 0, 0);
+		//for (int i = 0; i < 360; i++) {
+		//	double angle, x, y;
+		//	angle = i * 3.141592 / 180;
 
-		glBegin(GL_LINE_STRIP);
-		glVertex3f(-0.4, 0.4, 0.0);
-		glVertex3f(0, 0, 0.0);
-		glEnd();
+		//	//printf("angle - %f\n", angle);
+		//	x = rad * cos(angle);
+		//	y = rad * sin(angle);
+		//	glVertex2f(x, y);
+		//}
+		//glEnd();
 
-		glBegin(GL_LINE_STRIP);
-		glVertex3f(0.4, 0.4, 0.0);
-		glVertex3f(0, 0, 0.0);
-		glEnd();
-		//printf("call overrided Draw from pacman");
+		//glColor3f(1, 0, 0);
 
-		/*glLineWidth(3.0);
+		//glBegin(GL_LINE_STRIP);
+		//glVertex3f(-0.4, 0.4, 0.0);
+		//glVertex3f(0, 0, 0.0);
+		//glEnd();
 
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glColor3f(0.0f, 0.0f, 1.0f);
-
-		double rad = radius;
-
-		glBegin(GL_POLYGON);
-		for (int i = 0; i < 360; i++)
-		{
-			double angle = i * 3.141592 / 180;
-			double x = rad * cos(angle);
-			double y = rad * sin(angle);
-			glVertex2f(x, y);
-		}
-		glEnd();
-
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glColor3f(1.0f, 0.0f, 0.0f);
-
-		glBegin(GL_LINE);
-		glVertex3f(-1.0, 1.0, 0.0);
-		glVertex3f(0.0, 0.0, 0.0);
-		glEnd();
-
-		glBegin(GL_LINE);
-		glVertex3f(1.0, 1.0, 0.0);
-		glVertex3f(0.0, 0.0, 0.0);
-		glEnd();
-
-		glFinish();*/
+		//glBegin(GL_LINE_STRIP);
+		//glVertex3f(0.4, 0.4, 0.0);
+		//glVertex3f(0, 0, 0.0);
+		//glEnd();
+		
 	}
 
 };
