@@ -159,10 +159,12 @@ class Enemy : public Entity {
 public:
 	float lastDirection = 0;
 	int fruitAte = 0;
+	Entity* target=NULL;
 
 	Enemy(vector<Entity*>* es) {
 		printf("created enemy\n");
 		allEntities = es;
+		
 		type = EntityTypes::enemy;
 		radius = 0.3;
 		isAlive = true;
@@ -186,6 +188,21 @@ public:
 	}
 
 	virtual void Inputed() {
+		
+		for (auto xx : *allEntities) {
+			if (xx->type == EntityTypes::player) {
+				target = xx;
+			}
+		}
+
+		if (target != NULL) {
+			float dx = x - target->x;
+			float dy = y - target->y;
+
+			float ang = atan2(dy, dx);
+			lastDirection = ang * 180 / 3.14;
+		}
+
 		//find player and turn to that
 	}
 
@@ -195,6 +212,7 @@ public:
 
 	virtual void Draw() {
 		glTranslatef(x, y, 0.0);
+		glRotatef(90, 0, 0, 1.0);
 		glRotatef(lastDirection, 0, 0, 1.0);
 		glLineWidth(3.0);
 
