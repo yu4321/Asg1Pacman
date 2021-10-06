@@ -19,11 +19,11 @@ float timeLeft = 30;
 
 class Entity {
 public:
-	float x;
-	float y;
-	float speed;
+	float x=0;
+	float y=0;
+	float speed=0;
 	EntityTypes type;
-	bool isAlive;
+	bool isAlive=false;
 
 	virtual vector<Entity> Touched() {
 		vector<Entity> v;
@@ -75,12 +75,14 @@ public:
 	int fruitAte = 0;
 
 	Pacman() {
-		printf("created pacman");
+		printf("created pacman\n");
 		isAlive = true;
 	}
 
-	virtual vector<Entity> Touched() {
-		printf("call overrided touched from pacman");
+
+
+	virtual vector<Entity> Touched(){
+		printf("call overrided touched from pacman\n");
 		vector<Entity> v;
 
 		for (auto x : v) {
@@ -99,55 +101,91 @@ public:
 	}
 
 	virtual void Inputed() {
-		printf("call overrided Inputed from pacman");
+		printf("call overrided Inputed from pacman\n");
 		float currentDirection = 0;
 
-		switch (lastPressed)
-		{
-		case GLUT_KEY_UP:
-			break;
-		case GLUT_KEY_DOWN:
-			currentDirection = 180;
-			break;
-		case GLUT_KEY_LEFT:
-			currentDirection = 90;
-			break;
-		case GLUT_KEY_RIGHT:
-			currentDirection = 270;
-			break;
-		default:
-			break;
+		if (lastPressed != 0) {
+			switch (lastPressed)
+			{
+			case GLUT_KEY_UP:
+				break;
+			case GLUT_KEY_DOWN:
+				currentDirection = 180;
+				break;
+			case GLUT_KEY_LEFT:
+				currentDirection = 90;
+				break;
+			case GLUT_KEY_RIGHT:
+				currentDirection = 270;
+				break;
+			default:
+				break;
+			}
+
+			if (currentDirection == lastDirection) {
+				speed = 0.5;
+			}
+
+			lastDirection = currentDirection;
+			/*	if (lastPressed == GLUT_KEY_UP) {
+					lastDirection = 0;
+				}*/
+			lastPressed = 0;
 		}
 
-		if (currentDirection == lastDirection) {
-			speed = 0.5;
-		}
-
-		lastDirection = currentDirection;
-		/*	if (lastPressed == GLUT_KEY_UP) {
-				lastDirection = 0;
-			}*/
+		
 	}
 
 	virtual void Move() {
-		printf("call overrided Move from pacman");
+		printf("call overrided Move from pacman\n");
 
 		if (lastDirection == 0) {
 			y += speed;
 		}
 		else if (lastDirection == 90) {
-			x += speed;
+			x -= speed;
 		}
 		else if (lastDirection == 180) {
 			y -= speed;
 		}
 		else if (lastDirection == 270) {
-			x -= speed;
+			x += speed;
 		}
+
+		speed = 0;
 	}
 
 	virtual void Draw() {
-		printf("call overrided Draw from pacman");
+		glTranslatef(x, y, 0.0);
+		glRotatef(lastDirection, 0, 0, 1.0);
+		glLineWidth(3.0);
+		glColor3f(1, 0, 0);
+		glBegin(GL_LINES);
+		glVertex3f(0.0, 1.0, 0.0);
+		glVertex3f(-1.0, 0.0, 0.0);
+
+		glVertex3f(-1.0, 0.0, 0.0);
+		glVertex3f(0.5, 0.0, 0.0);
+
+		glVertex3f(0.0, 1.0, 0.0);
+		glVertex3f(0.0, -0.7, 0.0);
+
+		glEnd();
+
+		double rad = 0.5;
+		glBegin(GL_LINE_STRIP);
+
+		for (int i = 0; i < 360; i++) {
+			double angle, x, y;
+			angle = i * 3.141592 / 180;
+			x = rad * cos(angle);
+			y = rad * sin(angle);
+			glVertex2f(x, y);
+		}
+		glEnd();
+		//printf("call overrided Draw from pacman");
+
+		/*glLineWidth(3.0);
 
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -179,13 +217,13 @@ public:
 		glVertex3f(0.0, 0.0, 0.0);
 		glEnd();
 
-		glFinish();
+		glFinish();*/
 	}
 
 };
 
-Pacman currentPlayer;
-vector<Entity> entities;
+Pacman* currentPlayer;
+vector<Entity*> entities;
 
 
 void GameOver() {
@@ -236,8 +274,8 @@ int main(int argc, char** argv)
 	// 콜백 함수 등록
 	glutDisplayFunc(Render);
 	glutReshapeFunc(Reshape);
-	/*glutTimerFunc(100, Timer, 1);
-	glutTimerFunc(10, Timer, 2);*/
+	glutTimerFunc(100, Timer, 1);
+	glutTimerFunc(10, Timer, 2);
 
 	/*glutKeyboardFunc([](unsigned char c, int x, int y){
 		switch (c)
@@ -268,8 +306,8 @@ int main(int argc, char** argv)
 	);
 
 	Pacman player;
-	entities.push_back(player);
-	currentPlayer = player;
+	entities.push_back(&player);
+	currentPlayer = &player;
 	// 메시지 처리 루푸 진입
 	glutMainLoop();
 	return 0;
@@ -378,14 +416,15 @@ void Render()
 	//DrawGrid();
 
 	for (auto x : entities) {
-		if (x.isAlive) {
-			x.Touched();
-			x.Inputed();
-			x.Move();
+		if (x->isAlive) {
+			x->Touched();
+			x->Inputed();
+			x->Move();
 			glPushMatrix();
 			{
-				glTranslatef(xOffset, yOffset, 0.0);
-				x.Draw();
+				//glTranslatef(x->x, x->y, 0.0);
+				//glTranslatef(xOffset, yOffset, 0.0);
+				x->Draw();
 				//DrawObject(1.0, 0.0, 0.0);
 			}
 			glPopMatrix();
