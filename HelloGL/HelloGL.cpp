@@ -9,6 +9,7 @@
 #include <math.h>
 #include <vector>
 #include <time.h>
+#include<ctime>
 #include <algorithm>
 #include "include/GL/freeglut.h"
 
@@ -23,10 +24,14 @@ void GameFinish();
 /// <summary>
 /// 마지막으로 눌린 키보드 값. 초기값 0
 /// </summary>
-/// 
-
-//이하 변수들은 값 수정 가능
 int lastPressed = 0;
+/// <summary>
+/// 실행 시간 체크(남은 시간과 다름)
+/// </summary>
+clock_t check;
+
+#pragma region Customizable Variables
+
 float timeLeft = 30;
 int Width = 600, Height = 600;
 float xMax = 600, yMax = 600;
@@ -42,6 +47,8 @@ float playerSpeed = (xMax + yMax) / 100;
 
 int enemySpawnInterval = 6000;
 int fruitSpawnInterval = 3000;
+
+#pragma endregion
 
 #pragma region Class And Enums
 
@@ -426,7 +433,7 @@ public:
 
 #pragma endregion
 
-
+#pragma region Function and Variables
 // 여기부터 main까지는 상단 클래스 등을 필요로 하는 함수/변수들
 
 Pacman* currentPlayer;
@@ -437,7 +444,8 @@ vector<Entity*> entities;
 /// </summary>
 void GameOver() {
 	int ate = currentPlayer->fruitAte;
-	printf("You Lose...\nCollected Fruit: %d\nTime Left: %f\n", ate,timeLeft);
+	auto survived = clock() - check;
+	printf("You Lose...\nCollected Fruit: %d\nTime Left: %f\nSurvived Time : %f\n", ate, timeLeft, (float)survived / 1000);
 	glutLeaveMainLoop();
 }
 
@@ -476,7 +484,7 @@ void SpawnFruitAtRandom() {
 			}
 		}
 
-		
+
 		x = nx;
 		y = ny;
 		break;
@@ -655,6 +663,8 @@ void Render()
 	glutSwapBuffers();
 }
 
+#pragma endregion
+
 /// <summary>
 /// 메인 함수
 /// </summary>
@@ -664,6 +674,7 @@ void Render()
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
+	check = clock();
 
 	glutInit(&argc, argv);
 
