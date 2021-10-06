@@ -24,16 +24,16 @@ int lastPressed = 0;
 float timeLeft = 30;
 int Width = 600, Height = 600;
 
-float xMax = 10, yMax = 10;
+float xMax = 600, yMax = 600;
 
-float enemyRadius = 0.3;
-float playerRadius = 0.5;
-float playerRadiusIncrese = 0.1;
-float fruitRadius = 0.3;
+float enemyRadius = 10;
+float playerRadius = 12;
+float playerRadiusIncrese = 4;
+float fruitRadius = 10;
 
-float enemySpeed = 0.01;
+float enemySpeed = 0.3;
 float enemySpeedIncrease = 1.5;
-float playerSpeed = (xMax + yMax) / 30;
+float playerSpeed = (xMax + yMax) / 100;
 
 int enemySpawnInterval = 5000;
 int fruitSpawnInterval = 6000;
@@ -133,12 +133,12 @@ public:
 
 	virtual void Draw() {
 		glTranslatef(x, y, 0.0);
-		glLineWidth(3.0);
+		glLineWidth(radius);
 
 		glColor3f(0, 0, 0);
 
 		glBegin(GL_LINE_STRIP);
-		glVertex3f(0, 0.4, 0.0);
+		glVertex3f(0, radius*1.33, 0.0);
 		glVertex3f(0, 0, 0.0);
 		glEnd();
 
@@ -233,7 +233,7 @@ public:
 		glTranslatef(x, y, 0.0);
 		glRotatef(90, 0, 0, 1.0);
 		glRotatef(lastDirection, 0, 0, 1.0);
-		glLineWidth(3.0);
+		glLineWidth(radius*10);
 
 	
 
@@ -255,9 +255,9 @@ public:
 		glColor3f(0.0f, 1.0f, 0.0f);
 
 		glBegin(GL_TRIANGLE_FAN);
-		glVertex3f(-0.2, 0.1, 0.0);
-		glVertex3f(0.2, 0.1, 0.0);
-		glVertex3f(0, 0.3, 0);
+		glVertex3f(-(radius*0.66), radius/3, 0.0);
+		glVertex3f(radius*0.66, radius/3, 0.0);
+		glVertex3f(0, radius, 0);
 		glEnd();
 	}
 };
@@ -377,7 +377,7 @@ public:
 		}
 		glTranslatef(x, y, 0.0);
 		glRotatef(lastDirection, 0, 0, 1.0);
-		glLineWidth(3.0);
+		glLineWidth(radius*5);
 	
 
 		glColor3f(1.0f, 0.7f, 0);
