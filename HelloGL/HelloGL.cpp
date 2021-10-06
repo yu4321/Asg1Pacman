@@ -4,6 +4,7 @@
 #include <math.h>
 #include <vector>
 #include <time.h>
+#include <algorithm>
 #include "include/GL/freeglut.h"
 
 using namespace std;
@@ -29,11 +30,32 @@ public:
 	float x=0;
 	float y=0;
 	float speed=0;
+	float radius = 0;
 	EntityTypes type;
+	vector<Entity*>* allEntities;
 	bool isAlive=false;
 
-	virtual vector<Entity> Touched() {
-		vector<Entity> v;
+	virtual vector<Entity*> Touched() {
+		vector<Entity*> v;
+
+		for (auto e : *allEntities) {
+			if (e->type == type) {
+				continue;
+			}
+
+			if (e->isAlive == false || isAlive == false) {
+				continue;
+			}
+
+			float dx = x - e->x;
+			float dy = y - e->y;
+
+			float length = sqrt((dx * dx) + (dy * dy));
+
+			if (length <= (radius + e->radius)) {
+				v.push_back(e);
+			}
+		}
 		return v;
 	}
 
@@ -44,6 +66,10 @@ public:
 	virtual void Move() {
 		//x += speed;
 		//y += speed;
+	}
+
+	virtual void Kill() {
+		isAlive = false;
 	}
 
 	virtual void Draw() {
@@ -78,14 +104,16 @@ public:
 class Fruit : public Entity {
 public:
 
-	Fruit() {
+	Fruit(vector<Entity*>* es) {
 		printf("created Fruit\n");
 		type = EntityTypes::fruit;
+		radius = 0.3;
+		allEntities = es;
 		isAlive = true;
 	}
-	virtual vector<Entity> Touched() {
+	/*virtual vector<Entity> Touched() {
 		printf("call overrided touched from pacman\n");
-		vector<Entity> v;
+		vector<Entity> v = Entity::Touched();
 
 		for (auto x : v) {
 			if (x.type != EntityTypes::fruit) {
@@ -95,7 +123,7 @@ public:
 		}
 
 		return v;
-	}
+	}*/
 
 	virtual void Draw() {
 		glTranslatef(x, y, 0.0);
@@ -110,7 +138,7 @@ public:
 
 		glColor3f(1.0f, 0.0f, 0.0f);
 
-		double rad = 0.3;
+		double rad = radius;
 		glBegin(GL_POLYGON);
 
 		for (int i = 0; i < 360; i++) {
@@ -129,25 +157,27 @@ public:
 
 class Enemy : public Entity {
 public:
-	float radius = 0.3;
 	float lastDirection = 0;
 	int fruitAte = 0;
 
-	Enemy() {
+	Enemy(vector<Entity*>* es) {
 		printf("created enemy\n");
+		allEntities = es;
 		type = EntityTypes::enemy;
+		radius = 0.3;
 		isAlive = true;
 	}
 
-	virtual vector<Entity> Touched() {
-		vector<Entity> v;
+	virtual vector<Entity*> Touched() {
+		vector<Entity*> v=Entity::Touched();
 
 		for (auto x : v) {
-			if (x.type == EntityTypes::fruit) {
+			if (x->type == EntityTypes::fruit) {
+				x->Kill();
 				fruitAte++;
 				speed *= 0.1;
 			}
-			else if (x.type == EntityTypes::player) {
+			else if (x->type == EntityTypes::player) {
 				break;
 			}
 		}
@@ -197,26 +227,28 @@ public:
 
 class Pacman :public Entity {
 public:
-	float radius = 0.5;
 	float lastDirection = 0;
 	int fruitAte = 0;
 
-	Pacman() {
+	Pacman(vector<Entity*>* es) {
 		printf("created pacman\n");
+		radius = 0.5;
+		allEntities = es;
 		type = EntityTypes::player;
 		isAlive = true;
 	}
 
-	virtual vector<Entity> Touched(){
+	virtual vector<Entity*> Touched(){
 		//printf("call overrided touched from pacman\n");
-		vector<Entity> v;
+		vector<Entity*> v = Entity::Touched();
 
 		for (auto x : v) {
-			if (x.type == EntityTypes::fruit) {
+			if (x->type == EntityTypes::fruit) {
 				fruitAte++;
+				x->Kill();
 				radius += 0.1;
 			}
-			else if (x.type == EntityTypes::enemy) {
+			else if (x->type == EntityTypes::enemy) {
 				isAlive = false;
 				GameOver();
 				break;
@@ -347,13 +379,17 @@ void SpawnFruitAtRandom() {
 		float nx = rand() % (int)xMax;
 		float ny = rand() % (int)yMax;
 
+		if (nx == 0 && ny == 0) {
+			continue;
+		}
+
 		x = nx;
 		y = ny;
 
 		break;
 	}
 
-	auto nfruit = new Fruit;
+	auto nfruit = new Fruit(&entities);
 	nfruit->x = x;
 	nfruit->y = y;
 
@@ -367,13 +403,17 @@ void SpawnEnemyAtRandom() {
 		float nx = rand() % (int)xMax;
 		float ny = rand() % (int)yMax;
 
+		if (nx == 0 && ny == 0) {
+			continue;
+		}
+
 		x = nx;
 		y = ny;
 
 		break;
 	}
 
-	auto nfruit = new Enemy;
+	auto nfruit = new Enemy(&entities);
 	nfruit->x = x;
 	nfruit->y = y;
 
@@ -457,7 +497,11 @@ int main(int argc, char** argv)
 		}
 	);
 
-	Pacman player;
+
+
+	MakeMaps();
+
+	Pacman player(&entities);
 	//Fruit testFruit;
 	//testFruit.x = xMax / 2;
 	//testFruit.y = yMax / 2;
@@ -467,7 +511,6 @@ int main(int argc, char** argv)
 	entities.push_back(&player);
 	currentPlayer = &player;
 
-	MakeMaps();
 	// 메시지 처리 루푸 진입
 	glutMainLoop();
 	return 0;
@@ -524,6 +567,14 @@ void Render()
 		}
 	}
 
+	for (auto iter = entities.begin(); iter != entities.end(); ) {
+		if (!(*iter)->isAlive) {
+			iter = entities.erase(iter);
+		}
+		else {
+			iter++;
+		}
+	}
 	//// Transformation example
 	//glPushMatrix();
 	//{
