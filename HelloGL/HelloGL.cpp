@@ -167,6 +167,7 @@ public:
 		
 		type = EntityTypes::enemy;
 		radius = 0.3;
+		speed = 0.01;
 		isAlive = true;
 	}
 
@@ -177,7 +178,7 @@ public:
 			if (x->type == EntityTypes::fruit) {
 				x->Kill();
 				fruitAte++;
-				speed *= 0.1;
+				speed *= 1.1;
 			}
 			else if (x->type == EntityTypes::player) {
 				break;
@@ -201,13 +202,41 @@ public:
 
 			float ang = atan2(dy, dx);
 			lastDirection = ang * 180 / 3.14;
+			printf("enemy angle : % f\n", lastDirection);
 		}
 
 		//find player and turn to that
 	}
 
 	virtual void Move() {
-
+		if (lastDirection < 45) {
+			x -= speed * 0.5;
+			y += speed * 0.5;
+		}
+		else if (lastDirection < 90) {
+			x -= speed;
+		}
+		else if (lastDirection < 135) {
+			x -= speed * 0.5;
+			y -= speed * 0.5;
+		}
+		else if (lastDirection < 180) {
+			y -= speed;
+		}
+		else if (lastDirection < 225) {
+			x += speed * 0.5;
+			y -= speed * 0.5;
+		}
+		else if (lastDirection < 270) {
+			x += speed;
+		}
+		else if (lastDirection < 315) {
+			x += speed * 0.5;
+			y += speed * 0.5;
+		}
+		else if (lastDirection < 360) {
+			y += speed;
+		}
 	}
 
 	virtual void Draw() {
