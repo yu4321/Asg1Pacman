@@ -506,7 +506,7 @@ void SpawnFruits(int id) {
 }
 
 void SpawnEnemies(int id) {
-	SpawnFruitAtRandom();
+	SpawnEnemyAtRandom();
 	glutTimerFunc(enemySpawnInterval, SpawnEnemies, 2);
 }
 
