@@ -21,6 +21,9 @@ int Width = 600, Height = 600;
 
 float xMax = 10, yMax = 10;
 
+int enemySpawnInterval = 5000;
+int fruitSpawnInterval = 6000;
+
 class Entity {
 public:
 	float x=0;
@@ -97,7 +100,14 @@ public:
 		glTranslatef(x, y, 0.0);
 		glLineWidth(3.0);
 
-		glColor3f(0.0f, 0.0f, 1.0f);
+		glColor3f(0, 0, 0);
+
+		glBegin(GL_LINE_STRIP);
+		glVertex3f(0, 0.4, 0.0);
+		glVertex3f(0, 0, 0.0);
+		glEnd();
+
+		glColor3f(1.0f, 0.0f, 0.0f);
 
 		double rad = 0.3;
 		glBegin(GL_POLYGON);
@@ -111,12 +121,7 @@ public:
 		}
 		glEnd();
 
-		glColor3f(0, 0, 0);
-
-		glBegin(GL_LINE_STRIP);
-		glVertex3f(0, 0.4, 0.0);
-		glVertex3f(0, 0, 0.0);
-		glEnd();
+	
 
 	}
 };
@@ -160,19 +165,6 @@ public:
 		if (lastPressed != 0) {
 			switch (lastPressed)
 			{
-			//case GLUT_KEY_UP:
-			//	break;
-			//case GLUT_KEY_DOWN:
-			//	currentDirection = 180;
-			//	break;
-			//case GLUT_KEY_LEFT:
-			//	currentDirection = 90;
-			//	break;
-			//case GLUT_KEY_RIGHT:
-			//	currentDirection = 270;
-			//	break;
-			//default:
-			//	break;
 			case GLUT_KEY_UP:
 				currentDirection = 90;
 				break;
@@ -204,27 +196,9 @@ public:
 	}
 
 	virtual void Move() {
-		//printf("call overrided Move from pacman\n");
-
 		float xOffset = 0;
 		float yOffset = 0;
 
-		//if (lastDirection == 0) {
-		//	//y += speed;
-		//	yOffset = speed;
-		//}
-		//else if (lastDirection == 90) {
-		//	//x -= speed;
-		//	xOffset = -speed;
-		//}
-		//else if (lastDirection == 180) {
-		//	//y -= speed;
-		//	yOffset = -speed;
-		//}
-		//else if (lastDirection == 270) {
-		//	//x += speed;
-		//	xOffset = speed;
-		//}
 
 		if (lastDirection == 90) {
 			//y += speed;
@@ -280,30 +254,6 @@ public:
 		
 		}
 		glEnd();
-		//glBegin(GL_POLYGON);
-
-		//for (int i = 0; i < 360; i++) {
-		//	double angle, x, y;
-		//	angle = i * 3.141592 / 180;
-
-		//	//printf("angle - %f\n", angle);
-		//	x = rad * cos(angle);
-		//	y = rad * sin(angle);
-		//	glVertex2f(x, y);
-		//}
-		//glEnd();
-
-		//glColor3f(1, 0, 0);
-
-		//glBegin(GL_LINE_STRIP);
-		//glVertex3f(-0.4, 0.4, 0.0);
-		//glVertex3f(0, 0, 0.0);
-		//glEnd();
-
-		//glBegin(GL_LINE_STRIP);
-		//glVertex3f(0.4, 0.4, 0.0);
-		//glVertex3f(0, 0, 0.0);
-		//glEnd();
 		
 	}
 
@@ -324,6 +274,26 @@ void GameFinish() {
 }
 
 void SpawnFruitAtRandom() {
+	float x = 0;
+	float y = 0;
+	while (true) {
+		float nx = rand() % (int)xMax;
+		float ny = rand() % (int)yMax;
+
+		x = nx;
+		y = ny;
+
+		break;
+	}
+
+	auto nfruit = new Fruit;
+	nfruit->x = x;
+	nfruit->y = y;
+
+	entities.push_back(nfruit);
+}
+
+void SpawnEnemyAtRandom() {
 
 }
 
@@ -335,6 +305,8 @@ void Render();
 void Reshape(int w, int h);
 void Timer(int id);
 
+void SpawnFruit();
+
 // 사용자 정의 함수
 void PrintGLMatrix(GLenum pname);
 
@@ -345,12 +317,35 @@ float angle2 = 0.0;
 float xOffset = 0;
 float yOffset = 0;
 
+void SpawnFruits(int id) {
+	SpawnFruitAtRandom();
+	glutTimerFunc(fruitSpawnInterval, SpawnFruits, 2);
+}
 
+void SpawnEnemies(int id) {
+	SpawnFruitAtRandom();
+	glutTimerFunc(enemySpawnInterval, SpawnEnemies, 2);
+}
+
+
+void MakeMaps() {
+	for (int i = 0; i < 8; i++) {
+		SpawnFruitAtRandom();
+	}
+
+	for (int i = 0; i < 3; i++) {
+		SpawnEnemyAtRandom();
+	}
+
+	glutTimerFunc(fruitSpawnInterval, SpawnFruits, 2);
+	glutTimerFunc(enemySpawnInterval, SpawnEnemies, 2);
+}
 
 
 // 메인 함수
 int main(int argc, char** argv)
 {
+	srand(time(NULL));
 	// Freeglut 초기화
 	glutInit(&argc, argv);
 
@@ -367,28 +362,9 @@ int main(int argc, char** argv)
 	// 콜백 함수 등록
 	glutDisplayFunc(Render);
 	glutReshapeFunc(Reshape);
-	glutTimerFunc(100, Timer, 1);
+	//glutTimerFunc(100, Timer, 1);
 	glutTimerFunc(10, Timer, 2);
 
-	/*glutKeyboardFunc([](unsigned char c, int x, int y){
-		switch (c)
-		{
-		case 'w':
-			yOffset++;
-			break;
-		case 's':
-			yOffset--;
-			break;
-		case 'a':
-			xOffset--;
-			break;
-		case 'd':
-			xOffset++;
-			break;
-		default:
-			break;
-		}
-	});*/
 
 	glutSpecialFunc([](int k, int x, int y) 
 		{
@@ -399,14 +375,16 @@ int main(int argc, char** argv)
 	);
 
 	Pacman player;
-	Fruit testFruit;
-	testFruit.x = xMax;
-	testFruit.y = yMax;
+	//Fruit testFruit;
+	//testFruit.x = xMax / 2;
+	//testFruit.y = yMax / 2;
 	player.x = xMax / 2;
 	player.y = yMax / 2;
-	entities.push_back(&testFruit);
+	//entities.push_back(&testFruit);
 	entities.push_back(&player);
 	currentPlayer = &player;
+
+	MakeMaps();
 	// 메시지 처리 루푸 진입
 	glutMainLoop();
 	return 0;
@@ -414,19 +392,8 @@ int main(int argc, char** argv)
 
 void Timer(int id)
 {
-	if (id == 1)
-	{
-		angle1++;
-		glutPostRedisplay();
-		glutTimerFunc(100, Timer, 1);
-	}
-
-	if (id == 2)
-	{
-		angle2++;
-		glutPostRedisplay();
-		glutTimerFunc(10, Timer, 2);
-	}
+	glutPostRedisplay();
+	glutTimerFunc(10, Timer, 2);
 }
 void Reshape(int w, int h)
 {
@@ -434,64 +401,6 @@ void Reshape(int w, int h)
 	glViewport(0, 0, w, h);
 	Width = w;
 	Height = h;
-}
-
-void DrawGrid()
-{
-	glLineWidth(3.0);
-	glColor3f(0.0, 0.0, 0.0);
-
-	glBegin(GL_LINES);
-	glVertex3f(-5.0, 0.0, 0.0);
-	glVertex3f(5.0, 0.0, 0.0);
-	glVertex3f(0.0, -5.0, 0.0);
-	glVertex3f(0.0, 5.0, 0.0);
-	glEnd();
-
-	glLineWidth(1.0);
-	for (int i = -5; i < 6; ++i)
-	{
-		glBegin(GL_LINES);
-		glVertex3f(i, -5.0, 0.0);
-		glVertex3f(i, 5.0, 0.0);
-		glEnd();
-
-		glBegin(GL_LINES);
-		glVertex3f(-5.0, i, 0.0);
-		glVertex3f(5.0, i, 0.0);
-		glEnd();
-	}
-}
-
-void DrawObject(float r, float g, float b)
-{
-	glLineWidth(3.0);
-	glColor3f(r, g, b);
-	glBegin(GL_LINES);
-	glVertex3f(0.0, 1.0, 0.0);
-	glVertex3f(-1.0, 0.0, 0.0);
-
-	glVertex3f(-1.0, 0.0, 0.0);
-	glVertex3f(0.5, 0.0, 0.0);
-
-	glVertex3f(0.0, 1.0, 0.0);
-	glVertex3f(0.0, -0.7, 0.0);
-
-	glEnd();
-
-	double rad = 0.5;
-	glBegin(GL_LINE_STRIP);
-
-	for (int i = 0; i < 360; i++) {
-		double angle, x, y;
-		angle = i * 3.141592 / 180;
-		x = rad * cos(angle);
-		y = rad * sin(angle);
-		glVertex2f(x, y);
-	}
-	glEnd();
-
-
 }
 
 void Render()
