@@ -178,7 +178,7 @@ public:
 			if (x->type == EntityTypes::fruit) {
 				x->Kill();
 				fruitAte++;
-				speed *= 1.1;
+				speed *= 1.3;
 			}
 			else if (x->type == EntityTypes::player) {
 				break;
@@ -209,34 +209,17 @@ public:
 	}
 
 	virtual void Move() {
-		if (lastDirection < 45) {
-			x -= speed * 0.5;
-			y += speed * 0.5;
-		}
-		else if (lastDirection < 90) {
-			x -= speed;
-		}
-		else if (lastDirection < 135) {
-			x -= speed * 0.5;
-			y -= speed * 0.5;
-		}
-		else if (lastDirection < 180) {
-			y -= speed;
-		}
-		else if (lastDirection < 225) {
-			x += speed * 0.5;
-			y -= speed * 0.5;
-		}
-		else if (lastDirection < 270) {
-			x += speed;
-		}
-		else if (lastDirection < 315) {
-			x += speed * 0.5;
-			y += speed * 0.5;
-		}
-		else if (lastDirection < 360) {
-			y += speed;
-		}
+		
+		float dx = target->x - x;
+		float dy = target->y - y;
+
+		float hyp= sqrt((dx * dx) + (dy * dy));
+
+		dx /= hyp;
+		dy /= hyp;
+
+		x += dx * speed;
+		y += dy * speed;
 	}
 
 	virtual void Draw() {
@@ -248,7 +231,7 @@ public:
 	
 
 
-		glColor3f(1, 0, 0.5);
+		glColor3f(0.2*fruitAte, 0, 0.5);
 
 		double rad = radius;
 		glBegin(GL_POLYGON);
