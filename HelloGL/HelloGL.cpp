@@ -462,6 +462,7 @@ void SpawnFruitAtRandom() {
 		nx = rand() % (int)xMax;
 		ny = rand() % (int)yMax;
 
+		/// 플레이어와의 겹침 생성 방지 로직
 		if (currentPlayer != NULL) {
 			auto nEntity = new Entity;
 			nEntity->allEntities = currentPlayer->allEntities;
@@ -501,10 +502,12 @@ void SpawnEnemyAtRandom() {
 	float y = 0;
 	float nx = 0;
 	float ny = 0;
+
 	while (true) {
 		nx = rand() % (int)xMax;
 		ny = rand() % (int)yMax;
 
+		/// 플레이어와의 겹침 생성 방지 로직
 		if (currentPlayer != NULL) {
 			auto nEntity = new Entity;
 			nEntity->allEntities = currentPlayer->allEntities;
