@@ -80,6 +80,7 @@ public:
 
 	Fruit() {
 		printf("created Fruit\n");
+		type = EntityTypes::fruit;
 		isAlive = true;
 	}
 	virtual vector<Entity> Touched() {
@@ -126,6 +127,74 @@ public:
 	}
 };
 
+class Enemy : public Entity {
+public:
+	float radius = 0.3;
+	float lastDirection = 0;
+	int fruitAte = 0;
+
+	Enemy() {
+		printf("created enemy\n");
+		type = EntityTypes::enemy;
+		isAlive = true;
+	}
+
+	virtual vector<Entity> Touched() {
+		vector<Entity> v;
+
+		for (auto x : v) {
+			if (x.type == EntityTypes::fruit) {
+				fruitAte++;
+				speed *= 0.1;
+			}
+			else if (x.type == EntityTypes::player) {
+				break;
+			}
+		}
+
+		return v;
+	}
+
+	virtual void Inputed() {
+		//find player and turn to that
+	}
+
+	virtual void Move() {
+
+	}
+
+	virtual void Draw() {
+		glTranslatef(x, y, 0.0);
+		glRotatef(lastDirection, 0, 0, 1.0);
+		glLineWidth(3.0);
+
+	
+
+
+		glColor3f(1, 0, 0.5);
+
+		double rad = radius;
+		glBegin(GL_POLYGON);
+
+		for (int i = 0; i < 360; i++) {
+			double angle, x, y;
+			angle = i * 3.141592 / 180;
+			x = rad * cos(angle);
+			y = rad * sin(angle);
+			glVertex2f(x, y);
+		}
+		glEnd();
+
+		glColor3f(0.0f, 1.0f, 0.0f);
+
+		glBegin(GL_TRIANGLE_FAN);
+		glVertex3f(-0.2, 0.1, 0.0);
+		glVertex3f(0.2, 0.1, 0.0);
+		glVertex3f(0, 0.3, 0);
+		glEnd();
+	}
+};
+
 class Pacman :public Entity {
 public:
 	float radius = 0.5;
@@ -134,10 +203,9 @@ public:
 
 	Pacman() {
 		printf("created pacman\n");
+		type = EntityTypes::player;
 		isAlive = true;
 	}
-
-
 
 	virtual vector<Entity> Touched(){
 		//printf("call overrided touched from pacman\n");
@@ -159,7 +227,6 @@ public:
 	}
 
 	virtual void Inputed() {
-		//printf("call overrided Inputed from pacman\n");
 		float currentDirection = 0;
 
 		if (lastPressed != 0) {
@@ -294,7 +361,23 @@ void SpawnFruitAtRandom() {
 }
 
 void SpawnEnemyAtRandom() {
+	float x = 0;
+	float y = 0;
+	while (true) {
+		float nx = rand() % (int)xMax;
+		float ny = rand() % (int)yMax;
 
+		x = nx;
+		y = ny;
+
+		break;
+	}
+
+	auto nfruit = new Enemy;
+	nfruit->x = x;
+	nfruit->y = y;
+
+	entities.push_back(nfruit);
 }
 
 
