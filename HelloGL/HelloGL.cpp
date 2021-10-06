@@ -1,4 +1,9 @@
-﻿#include <stdlib.h>
+﻿/*
+2015110758 류영석 컴퓨터 그래픽스 과제 1
+*/
+
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -9,21 +14,21 @@
 
 using namespace std;
 
-/// <summary>
-/// 게임 엔티티의 타입 목록 : 없음, 플레이어, 적, 과일
-/// </summary>
-enum EntityTypes { none, player, enemy, fruit };
-
-
-/// 전역 변수들은 여기 있으면 객체지향 어긋나지만 일단 작업
-
+/// 아래 두 함수는 클래스 내에서도 사용되므로 미리 선언
 void GameOver();
 void GameFinish();
 
+/// 아래 변수들도 상동. 원래는 전역변수로 쓰던가 생성때 주입하던가 해야함
+
+/// <summary>
+/// 마지막으로 눌린 키보드 값. 초기값 0
+/// </summary>
+/// 
+
+//이하 변수들은 값 수정 가능
 int lastPressed = 0;
 float timeLeft = 30;
 int Width = 600, Height = 600;
-
 float xMax = 600, yMax = 600;
 
 float enemyRadius = 10;
@@ -31,26 +36,38 @@ float playerRadius = 12;
 float playerRadiusIncrese = 4;
 float fruitRadius = 10;
 
-float enemySpeed = 0.3;
+float enemySpeed = 0.5;
 float enemySpeedIncrease = 1.5;
 float playerSpeed = (xMax + yMax) / 100;
 
-int enemySpawnInterval = 5000;
-int fruitSpawnInterval = 6000;
+int enemySpawnInterval = 6000;
+int fruitSpawnInterval = 3000;
+
+#pragma region Class And Enums
+
+
+/// <summary>
+/// 게임 엔티티의 타입 목록 : 없음, 플레이어, 적, 과일
+/// </summary>
+enum EntityTypes { none, player, enemy, fruit };
 
 /// <summary>
 /// 모든 게임 엔티티의 원형
 /// </summary>
 class Entity {
 public:
-	float x=0;
-	float y=0;
-	float speed=0;
+	float x = 0;
+	float y = 0;
+	float speed = 0;
 	float radius = 0;
 	EntityTypes type;
 	vector<Entity*>* allEntities;
-	bool isAlive=false;
+	bool isAlive = false;
 
+	/// <summary>
+	/// 자신과 다른 타입을 가진 엔티티와의 접촉 여부 감지. 접촉한 엔티티를 모두 반환
+	/// </summary>
+	/// <returns></returns>
 	virtual vector<Entity*> Touched() {
 		vector<Entity*> v;
 
@@ -75,46 +92,19 @@ public:
 		return v;
 	}
 
-	virtual void Inputed() {
+	virtual void Inputed() {}
 
-	}
+	virtual void Move() {}
 
-	virtual void Move() {
-		//x += speed;
-		//y += speed;
-	}
-
+	/// <summary>
+	/// 외부에서 객체 삭제
+	/// </summary>
 	virtual void Kill() {
 		isAlive = false;
 	}
 
-	virtual void Draw() {
-		glLineWidth(3.0);
-		glColor3f(1, 0, 0);
-		glBegin(GL_LINES);
-		glVertex3f(0.0, 1.0, 0.0);
-		glVertex3f(-1.0, 0.0, 0.0);
 
-		glVertex3f(-1.0, 0.0, 0.0);
-		glVertex3f(0.5, 0.0, 0.0);
-
-		glVertex3f(0.0, 1.0, 0.0);
-		glVertex3f(0.0, -0.7, 0.0);
-
-		glEnd();
-
-		double rad = 0.5;
-		glBegin(GL_LINE_STRIP);
-
-		for (int i = 0; i < 360; i++) {
-			double angle, x, y;
-			angle = i * 3.141592 / 180;
-			x = rad * cos(angle);
-			y = rad * sin(angle);
-			glVertex2f(x, y);
-		}
-		glEnd();
-	}
+	virtual void Draw() {}
 };
 
 /// <summary>
@@ -131,6 +121,9 @@ public:
 		isAlive = true;
 	}
 
+	/// <summary>
+	/// 동그라미 위에 줄기
+	/// </summary>
 	virtual void Draw() {
 		glTranslatef(x, y, 0.0);
 		glLineWidth(radius);
@@ -138,7 +131,7 @@ public:
 		glColor3f(0, 0, 0);
 
 		glBegin(GL_LINE_STRIP);
-		glVertex3f(0, radius*1.33, 0.0);
+		glVertex3f(0, radius * 1.33, 0.0);
 		glVertex3f(0, 0, 0.0);
 		glEnd();
 
@@ -156,7 +149,7 @@ public:
 		}
 		glEnd();
 
-	
+
 
 	}
 };
@@ -168,20 +161,24 @@ class Enemy : public Entity {
 public:
 	float lastDirection = 0;
 	int fruitAte = 0;
-	Entity* target=NULL;
+	Entity* target = NULL;
 
 	Enemy(vector<Entity*>* es) {
 		//printf("created enemy\n");
 		allEntities = es;
-		
+
 		type = EntityTypes::enemy;
 		radius = enemyRadius;
 		speed = enemySpeed;
 		isAlive = true;
 	}
 
+	/// <summary>
+	/// 접촉 엔티티 목록을 가져와서 과일이면 제거 후 자신 스피드 상승. 플레이어면 처리 종료(게임 오버는 플레이어측 Touched에서 처리)
+	/// </summary>
+	/// <returns></returns>
 	virtual vector<Entity*> Touched() {
-		vector<Entity*> v=Entity::Touched();
+		vector<Entity*> v = Entity::Touched();
 
 		for (auto x : v) {
 			if (x->type == EntityTypes::fruit) {
@@ -197,8 +194,11 @@ public:
 		return v;
 	}
 
+	/// <summary>
+	/// 플레이어와의 위치 계산 및 그 방향으로 회전
+	/// </summary>
 	virtual void Inputed() {
-		
+
 		for (auto xx : *allEntities) {
 			if (xx->type == EntityTypes::player) {
 				target = xx;
@@ -215,12 +215,15 @@ public:
 		}
 	}
 
+	/// <summary>
+	/// 플레이어로 가는 일반화된 벡터를 얻은 뒤 스피드에 더해서 Draw때 그려지도록
+	/// </summary>
 	virtual void Move() {
-		
+
 		float dx = target->x - x;
 		float dy = target->y - y;
 
-		float hyp= sqrt((dx * dx) + (dy * dy));
+		float hyp = sqrt((dx * dx) + (dy * dy));
 
 		dx /= hyp;
 		dy /= hyp;
@@ -229,16 +232,19 @@ public:
 		y += dy * speed;
 	}
 
+	/// <summary>
+	/// x y로 Translate 및 Rotate 후 원+화살표 모양 Draw. 또한 과일을 먹을 수록 색이 붉게 변함
+	/// </summary>
 	virtual void Draw() {
 		glTranslatef(x, y, 0.0);
 		glRotatef(90, 0, 0, 1.0);
 		glRotatef(lastDirection, 0, 0, 1.0);
-		glLineWidth(radius*10);
-
-	
+		glLineWidth(radius * 10);
 
 
-		glColor3f(0.2*fruitAte, 0, 0.5);
+
+
+		glColor3f(0.2 * fruitAte, 0, 0.5);
 
 		double rad = radius;
 		glBegin(GL_POLYGON);
@@ -255,8 +261,8 @@ public:
 		glColor3f(0.0f, 1.0f, 0.0f);
 
 		glBegin(GL_TRIANGLE_FAN);
-		glVertex3f(-(radius*0.66), radius/3, 0.0);
-		glVertex3f(radius*0.66, radius/3, 0.0);
+		glVertex3f(-(radius * 0.66), radius / 3, 0.0);
+		glVertex3f(radius * 0.66, radius / 3, 0.0);
 		glVertex3f(0, radius, 0);
 		glEnd();
 	}
@@ -280,7 +286,11 @@ public:
 		isAlive = true;
 	}
 
-	virtual vector<Entity*> Touched(){
+	/// <summary>
+	/// 접촉 엔티티 중 과일이 있으면 지름++, 적이 있으면 게임 종료
+	/// </summary>
+	/// <returns></returns>
+	virtual vector<Entity*> Touched() {
 		//printf("call overrided touched from pacman\n");
 		vector<Entity*> v = Entity::Touched();
 
@@ -300,6 +310,9 @@ public:
 		return v;
 	}
 
+	/// <summary>
+	/// 키보드 1회 입력은 방향전환, 2회 입력은 해당 방향 전진. 초기값은 위쪽
+	/// </summary>
 	virtual void Inputed() {
 		float currentDirection = 0;
 
@@ -323,7 +336,7 @@ public:
 			}
 
 			if (currentDirection == lastDirection) {
-				speed = playerSpeed ;
+				speed = playerSpeed;
 			}
 
 			lastDirection = currentDirection;
@@ -331,9 +344,12 @@ public:
 			lastPressed = 0;
 		}
 
-		
+
 	}
 
+	/// <summary>
+	/// 회전한 방향으로 x y 더하기. 플레이어는 화면 밖에 나갈 수 없음
+	/// </summary>
 	virtual void Move() {
 		float xOffset = 0;
 		float yOffset = 0;
@@ -366,6 +382,9 @@ public:
 		speed = 0;
 	}
 
+	/// <summary>
+	/// 60번 불릴때마다 팩맨의 입을 여닫는 애니메이션 구현
+	/// </summary>
 	virtual void Draw() {
 
 		if (calledCnt < 60) {
@@ -377,8 +396,8 @@ public:
 		}
 		glTranslatef(x, y, 0.0);
 		glRotatef(lastDirection, 0, 0, 1.0);
-		glLineWidth(radius*5);
-	
+		glLineWidth(radius * 5);
+
 
 		glColor3f(1.0f, 0.7f, 0);
 
@@ -397,64 +416,51 @@ public:
 					(radius * sin(i * twicePi / triangleAmount))
 				);
 			}
-			/*if (isMouthOpened) {
-				if (i > 30 && i < 300) {
-					glVertex2f(
-						(radius * cos(i * twicePi / triangleAmount)),
-						(radius * sin(i * twicePi / triangleAmount))
-					);
-				}
-			}
-			else {
-				glVertex2f(
-					(radius * cos(i * twicePi / triangleAmount)),
-					(radius * sin(i * twicePi / triangleAmount))
-				);
-			}*/
 
-			
-		
 		}
 		glEnd();
-		
+
 	}
 
 };
 
+#pragma endregion
 
+
+// 여기부터 main까지는 상단 클래스 등을 필요로 하는 함수/변수들
 
 Pacman* currentPlayer;
 vector<Entity*> entities;
 
-
+/// <summary>
+/// 게임 실패
+/// </summary>
 void GameOver() {
 	int ate = currentPlayer->fruitAte;
 	printf("You Lose...\nCollected Fruit: %d\nTime Left: %f\n", ate,timeLeft);
 	glutLeaveMainLoop();
 }
 
+/// <summary>
+/// 게임 완료
+/// </summary>
 void GameFinish() {
 	int ate = currentPlayer->fruitAte;
 	printf("You Win!!\nCollected Fruit: %d\n", ate);
 	glutLeaveMainLoop();
 }
 
+/// <summary>
+/// 무작위 위치에 과일 생성
+/// </summary>
 void SpawnFruitAtRandom() {
 	float x = 0;
 	float y = 0;
-	while (true) {
-		float nx = rand() % (int)xMax;
-		float ny = rand() % (int)yMax;
+	float nx = rand() % (int)xMax;
+	float ny = rand() % (int)yMax;
 
-		if (nx == 0 && ny == 0) {
-			continue;
-		}
-
-		x = nx;
-		y = ny;
-
-		break;
-	}
+	x = nx;
+	y = ny;
 
 	auto nfruit = new Fruit(&entities);
 	nfruit->x = x;
@@ -463,22 +469,18 @@ void SpawnFruitAtRandom() {
 	entities.push_back(nfruit);
 }
 
+/// <summary>
+/// 무작위 위치에 적 생성
+/// </summary>
 void SpawnEnemyAtRandom() {
 	float x = 0;
 	float y = 0;
-	while (true) {
-		float nx = rand() % (int)xMax;
-		float ny = rand() % (int)yMax;
+	float nx = rand() % (int)xMax;
+	float ny = rand() % (int)yMax;
 
-		if (nx == 0 && ny == 0) {
-			continue;
-		}
 
-		x = nx;
-		y = ny;
-
-		break;
-	}
+	x = nx;
+	y = ny;
 
 	auto nfruit = new Enemy(&entities);
 	nfruit->x = x;
@@ -487,44 +489,131 @@ void SpawnEnemyAtRandom() {
 	entities.push_back(nfruit);
 }
 
-
-
-
-void Render();
-void Reshape(int w, int h);
-void Timer(int id);
-
-float angle1 = 0.0;
-float angle2 = 0.0;
-
-float xOffset = 0;
-float yOffset = 0;
-
+/// <summary>
+/// 과일 생성 타이머 콜백
+/// </summary>
+/// <param name="id"></param>
 void SpawnFruits(int id) {
 	SpawnFruitAtRandom();
 	glutTimerFunc(fruitSpawnInterval, SpawnFruits, 2);
 }
 
+/// <summary>
+/// 적 생성 타이머 콜백
+/// </summary>
+/// <param name="id"></param>
 void SpawnEnemies(int id) {
 	SpawnEnemyAtRandom();
 	glutTimerFunc(enemySpawnInterval, SpawnEnemies, 2);
 }
 
+/// <summary>
+/// 첫 적 3마리 화면 가장자리에서 생성
+/// </summary>
+void SpawnFirstEnemies() {
+	auto nfruit1 = new Enemy(&entities);
+	auto nfruit2 = new Enemy(&entities);
+	auto nfruit3 = new Enemy(&entities);
+	nfruit1->x = 0;
+	nfruit1->y = yMax;
 
+	nfruit2->x = xMax;
+	nfruit2->y = yMax;
+
+	nfruit3->x = xMax;
+	nfruit3->y = 0;
+
+
+	entities.push_back(nfruit1);
+	entities.push_back(nfruit2);
+	entities.push_back(nfruit3);
+}
+
+/// <summary>
+/// 최초 맵 생성
+/// </summary>
 void MakeMaps() {
 	for (int i = 0; i < 8; i++) {
 		SpawnFruitAtRandom();
 	}
 
-	for (int i = 0; i < 3; i++) {
-		SpawnEnemyAtRandom();
-	}
+	SpawnFirstEnemies();
 
 	glutTimerFunc(fruitSpawnInterval, SpawnFruits, 2);
 	glutTimerFunc(enemySpawnInterval, SpawnEnemies, 2);
 }
 
+/// <summary>
+/// 게임 진행/화면 갱신 타이머 콜백
+/// </summary>
+/// <param name="id"></param>
+void Timer(int id)
+{
+	if (timeLeft > 0) {
+		timeLeft -= 0.01;
+		glutPostRedisplay();
+		glutTimerFunc(10, Timer, 2);
+	}
+	else {
+		GameFinish();
+		glFinish();
+	}
 
+
+}
+
+void Reshape(int w, int h)
+{
+	glViewport(0, 0, w, h);
+	Width = w;
+	Height = h;
+}
+
+void Render()
+{
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0, xMax, 0, yMax);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// 모든 엔티티 목록을 순회하며, 살아있는 엔티티의 경우에는 개별 행동 처리 및 그리기
+	for (auto x : entities) {
+		if (x->isAlive) {
+			x->Touched();
+			x->Inputed();
+			x->Move();
+			glPushMatrix();
+			{
+				x->Draw();
+			}
+			glPopMatrix();
+		}
+	}
+
+	// 죽은 엔티티 전체 제거
+	for (auto iter = entities.begin(); iter != entities.end(); ) {
+		if (!(*iter)->isAlive) {
+			iter = entities.erase(iter);
+		}
+		else {
+			iter++;
+		}
+	}
+
+	glutSwapBuffers();
+}
+
+/// <summary>
+/// 메인 함수
+/// </summary>
+/// <param name="argc"></param>
+/// <param name="argv"></param>
+/// <returns></returns>
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
@@ -561,65 +650,9 @@ int main(int argc, char** argv)
 	currentPlayer = &player;
 
 	glutMainLoop();
+
 	return 0;
 }
 
-void Timer(int id)
-{
-	if (timeLeft > 0) {
-		timeLeft -= 0.01;
-		glutPostRedisplay();
-		glutTimerFunc(10, Timer, 2);
-	}
-	else {
-		GameFinish();
-		glFinish();
-	}
 
-
-}
-void Reshape(int w, int h)
-{
-	glViewport(0, 0, w, h);
-	Width = w;
-	Height = h;
-}
-
-void Render()
-{
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0, xMax, 0, yMax);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-
-	for (auto x : entities) {
-		if (x->isAlive) {
-			x->Touched();
-			x->Inputed();
-			x->Move();
-			glPushMatrix();
-			{
-				x->Draw();
-			}
-			glPopMatrix();
-		}
-	}
-
-	for (auto iter = entities.begin(); iter != entities.end(); ) {
-		if (!(*iter)->isAlive) {
-			iter = entities.erase(iter);
-		}
-		else {
-			iter++;
-		}
-	}
-
-	glutSwapBuffers();
-}
 
