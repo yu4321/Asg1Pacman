@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <vector>
+#include <time.h>
 #include "include/GL/freeglut.h"
 
 using namespace std;
@@ -16,6 +17,9 @@ void GameFinish();
 
 int lastPressed = 0;
 float timeLeft = 30;
+int Width = 600, Height = 600;
+
+float xMax = 10, yMax = 10;
 
 class Entity {
 public:
@@ -68,9 +72,58 @@ public:
 	}
 };
 
+class Fruit : public Entity {
+public:
+
+	Fruit() {
+		printf("created Fruit\n");
+		isAlive = true;
+	}
+	virtual vector<Entity> Touched() {
+		printf("call overrided touched from pacman\n");
+		vector<Entity> v;
+
+		for (auto x : v) {
+			if (x.type != EntityTypes::fruit) {
+				isAlive = false;
+				break;
+			}
+		}
+
+		return v;
+	}
+
+	virtual void Draw() {
+		glTranslatef(x, y, 0.0);
+		glLineWidth(3.0);
+
+		glColor3f(0.0f, 0.0f, 1.0f);
+
+		double rad = 0.3;
+		glBegin(GL_POLYGON);
+
+		for (int i = 0; i < 360; i++) {
+			double angle, x, y;
+			angle = i * 3.141592 / 180;
+			x = rad * cos(angle);
+			y = rad * sin(angle);
+			glVertex2f(x, y);
+		}
+		glEnd();
+
+		glColor3f(0, 0, 0);
+
+		glBegin(GL_LINE_STRIP);
+		glVertex3f(0, 0.4, 0.0);
+		glVertex3f(0, 0, 0.0);
+		glEnd();
+
+	}
+};
+
 class Pacman :public Entity {
 public:
-	float radius = 0.3;
+	float radius = 0.5;
 	float lastDirection = 0;
 	int fruitAte = 0;
 
@@ -123,7 +176,7 @@ public:
 			}
 
 			if (currentDirection == lastDirection) {
-				speed = 0.5;
+				speed = (xMax+yMax)/30 ;
 			}
 
 			lastDirection = currentDirection;
@@ -139,17 +192,35 @@ public:
 	virtual void Move() {
 		printf("call overrided Move from pacman\n");
 
+		float xOffset = 0;
+		float yOffset = 0;
+
 		if (lastDirection == 0) {
-			y += speed;
+			//y += speed;
+			yOffset = speed;
 		}
 		else if (lastDirection == 90) {
-			x -= speed;
+			//x -= speed;
+			xOffset = -speed;
 		}
 		else if (lastDirection == 180) {
-			y -= speed;
+			//y -= speed;
+			yOffset = -speed;
 		}
 		else if (lastDirection == 270) {
-			x += speed;
+			//x += speed;
+			xOffset = speed;
+		}
+
+		float nx = x + xOffset;
+		float ny = y + yOffset;
+
+		if (nx >= 0 and nx <= xMax) {
+			x = nx;
+		}
+
+		if (ny >= 0 and ny <= yMax) {
+			y = ny;
 		}
 
 		speed = 0;
@@ -161,21 +232,9 @@ public:
 		glLineWidth(3.0);
 	
 
-		/*glBegin(GL_LINES);
-		glVertex3f(0.0, 1.0, 0.0);
-		glVertex3f(-1.0, 0.0, 0.0);
-
-		glVertex3f(-1.0, 0.0, 0.0);
-		glVertex3f(0.5, 0.0, 0.0);
-
-		glVertex3f(0.0, 1.0, 0.0);
-		glVertex3f(0.0, -0.7, 0.0);
-
-		glEnd();*/
-
 		glColor3f(0.0f, 0.0f, 1.0f);
 
-		double rad = 0.5;
+		double rad = radius;
 		glBegin(GL_POLYGON);
 
 		for (int i = 0; i < 360; i++) {
@@ -237,6 +296,8 @@ public:
 
 };
 
+
+
 Pacman* currentPlayer;
 vector<Entity*> entities;
 
@@ -249,8 +310,12 @@ void GameFinish() {
 
 }
 
+void SpawnFruitAtRandom() {
 
-int Width = 400, Height = 400;
+}
+
+
+
 
 // 콜백 함수 선언
 void Render();
@@ -321,6 +386,12 @@ int main(int argc, char** argv)
 	);
 
 	Pacman player;
+	Fruit testFruit;
+	testFruit.x = xMax;
+	testFruit.y = yMax;
+	player.x = xMax / 2;
+	player.y = yMax / 2;
+	entities.push_back(&testFruit);
 	entities.push_back(&player);
 	currentPlayer = &player;
 	// 메시지 처리 루푸 진입
@@ -419,7 +490,9 @@ void Render()
 	// 관측 공간 지정
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(-5.0, 5.0, -5.0, 5.0);
+	//gluOrtho2D(-xMax, xMax, -yMax, yMax);
+	gluOrtho2D(0, xMax, 0, yMax);
+	//gluOrtho2D(0,Width,0,Height);
 	//PrintGLMatrix(GL_PROJECTION_MATRIX);
 
 	// 관측 변환 설정
