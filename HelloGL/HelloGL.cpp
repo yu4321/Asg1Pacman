@@ -105,7 +105,7 @@ class Fruit : public Entity {
 public:
 
 	Fruit(vector<Entity*>* es) {
-		printf("created Fruit\n");
+		//printf("created Fruit\n");
 		type = EntityTypes::fruit;
 		radius = 0.3;
 		allEntities = es;
@@ -162,12 +162,12 @@ public:
 	Entity* target=NULL;
 
 	Enemy(vector<Entity*>* es) {
-		printf("created enemy\n");
+		//printf("created enemy\n");
 		allEntities = es;
 		
 		type = EntityTypes::enemy;
 		radius = 0.3;
-		speed = 0.01;
+		speed = 0.005;
 		isAlive = true;
 	}
 
@@ -202,7 +202,7 @@ public:
 
 			float ang = atan2(dy, dx);
 			lastDirection = ang * 180 / 3.14;
-			printf("enemy angle : % f\n", lastDirection);
+			//printf("enemy angle : % f\n", lastDirection);
 		}
 
 		//find player and turn to that
@@ -261,7 +261,7 @@ public:
 	int fruitAte = 0;
 
 	Pacman(vector<Entity*>* es) {
-		printf("created pacman\n");
+		//printf("created pacman\n");
 		radius = 0.5;
 		allEntities = es;
 		type = EntityTypes::player;
@@ -395,11 +395,15 @@ vector<Entity*> entities;
 
 
 void GameOver() {
-
+	int ate = currentPlayer->fruitAte;
+	printf("You Lose...\nCollected Fruit: %d\nSurvived Time: %f\n", ate,timeLeft);
+	glutLeaveMainLoop();
 }
 
 void GameFinish() {
-
+	int ate = currentPlayer->fruitAte;
+	printf("You Win!!\nCollected Fruit: %d\n", ate);
+	glutLeaveMainLoop();
 }
 
 void SpawnFruitAtRandom() {
@@ -548,8 +552,17 @@ int main(int argc, char** argv)
 
 void Timer(int id)
 {
-	glutPostRedisplay();
-	glutTimerFunc(10, Timer, 2);
+	if (timeLeft > 0) {
+		timeLeft -= 0.01;
+		glutPostRedisplay();
+		glutTimerFunc(10, Timer, 2);
+	}
+	else {
+		GameFinish();
+		glFinish();
+	}
+
+
 }
 void Reshape(int w, int h)
 {
