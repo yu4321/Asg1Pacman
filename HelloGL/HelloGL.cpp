@@ -126,7 +126,7 @@ public:
 	Fruit(vector<Entity*>* es) {
 		//printf("created Fruit\n");
 		type = EntityTypes::fruit;
-		radius = 0.3;
+		radius = fruitRadius;
 		allEntities = es;
 		isAlive = true;
 	}
