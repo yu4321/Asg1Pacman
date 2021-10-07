@@ -476,6 +476,7 @@ void SpawnFruitAtRandom() {
 			nEntity->allEntities = currentPlayer->allEntities;
 			nEntity->x = nx;
 			nEntity->y = ny;
+			nEntity->radius = fruitRadius*1.3;
 
 			auto v = nEntity->Touched();
 
@@ -521,6 +522,7 @@ void SpawnEnemyAtRandom() {
 			nEntity->allEntities = currentPlayer->allEntities;
 			nEntity->x = nx;
 			nEntity->y = ny;
+			nEntity->radius = enemyRadius*1.3;
 
 			auto v = nEntity->Touched();
 
